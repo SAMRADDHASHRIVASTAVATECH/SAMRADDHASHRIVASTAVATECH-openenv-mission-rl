@@ -1,10 +1,11 @@
 """
 inference.py - OpenEnv Web API
+Provides REST endpoints for reset() and step()
 """
 
 import os
 import json
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify
 
 from task_builder import build_tasks
 from env import SpaceMissionEnv
@@ -41,7 +42,12 @@ def reset():
         return jsonify({
             "status": "success",
             "observation": obs_dict,
-            "info": info
+            "info": {
+                "description": info.get("description", ""),
+                "difficulty": info.get("difficulty", 1),
+                "task_number": info.get("task_number", 1),
+                "total_tasks": info.get("total_tasks", 50)
+            }
         })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -68,7 +74,10 @@ def step():
             "reward": float(reward),
             "done": bool(done),
             "truncated": bool(truncated),
-            "info": info
+            "info": {
+                "score": info.get("eval", {}).get("score", 0),
+                "details": info.get("eval", {}).get("details", "")
+            }
         })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
