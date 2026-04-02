@@ -1,0 +1,61 @@
+# openenv.yaml
+name: "space-mission-rl-env"
+version: "1.0"
+description: "Gymnasium RL Environment for Space Mission Control Decision System"
+
+# Environment type
+type: "rl"
+
+# API Configuration
+api:
+  reset:
+    endpoint: "/reset"
+    method: "POST"
+    description: "Reset the environment"
+  
+  step:
+    endpoint: "/step"
+    method: "POST"
+    description: "Execute one step"
+    input:
+      action: "tuple of 3 integers (category, priority, decision)"
+    output:
+      observation: "dict with difficulty and task_index"
+      reward: "float"
+      done: "boolean"
+      truncated: "boolean"
+      info: "dict with evaluation info"
+  
+  health:
+    endpoint: "/health"
+    method: "GET"
+    description: "Health check"
+
+# Action space
+action_space:
+  type: "MultiDiscrete"
+  shape: [3, 3, 3]
+  description: "3 discrete dimensions: category (0-2), priority (0-2), decision (0-2)"
+
+# Observation space
+observation_space:
+  type: "Dict"
+  fields:
+    difficulty: "int (1-5)"
+    task_index: "int (0-49)"
+
+# Server configuration
+server:
+  host: "0.0.0.0"
+  port: 7860
+  protocol: "http"
+
+# Metadata
+metadata:
+  author: "Hackathon Submission"
+  license: "MIT"
+  tags:
+    - "rl"
+    - "gymnasium"
+    - "space-mission"
+    - "decision-making"
