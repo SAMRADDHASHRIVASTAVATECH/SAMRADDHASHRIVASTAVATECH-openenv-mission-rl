@@ -1,49 +1,84 @@
 """
-inference.py
+inference.py - OpenEnv Web API
 """
 
 import os
-import io
-import contextlib
-
-API_BASE_URL = os.getenv("API_BASE_URL", "")
-MODEL_NAME = os.getenv("MODEL_NAME", "")
-HF_TOKEN = os.getenv("HF_TOKEN", "")
+import json
+from flask import Flask, jsonify
 
 from task_builder import build_tasks
 from env import SpaceMissionEnv
 
-silent = io.StringIO()
-with contextlib.redirect_stdout(silent):
-    tasks = build_tasks([], min_tasks=50, max_tasks=50)
-    env = SpaceMissionEnv(tasks)
-    obs, info = env.reset()
+app = Flask(__name__)
 
-print("[START]")
+# Global environment (persists across requests)
+_ENV = None
+_TASKS = None
 
-cumulative = 0.0
-step = 0
-done = False
 
-while not done:
-    action = env.action_space.sample()
-    
-    buf = io.StringIO()
-    with contextlib.redirect_stdout(buf):
+def init_env():
+    """Initialize environment once."""
+    global _ENV, _TASKS
+    if _ENV is None:
+        _TASKS = build_tasks([], min_tasks=50, max_tasks=50)
+        _ENV = SpaceMissionEnv(_TASKS)
+    return _ENV
+
+
+@app.route("/reset", methods=["POST"])
+def reset():
+    """OpenEnv reset endpoint."""
+    try:
+        env = init_env()
+        obs, info = env.reset()
+        
+        # Convert obs to JSON-serializable format
+        obs_dict = {
+            "difficulty": int(obs["difficulty"][0]),
+            "task_index": int(obs["task_index"][0])
+        }
+        
+        return jsonify({
+            "status": "success",
+            "observation": obs_dict,
+            "info": info
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/step", methods=["POST"])
+def step():
+    """OpenEnv step endpoint."""
+    try:
+        data = request.get_json()
+        action = tuple(data.get("action", (0, 0, 0)))
+        
+        env = init_env()
         obs, reward, done, truncated, info = env.step(action)
-    
-    step += 1
-    cumulative += float(reward)
-    action_tuple = tuple(int(x) for x in action)
-    
-    print(f"[STEP] step={step} action={action_tuple} reward={reward:.2f} cumulative={cumulative:.2f}")
+        
+        obs_dict = {
+            "difficulty": int(obs["difficulty"][0]),
+            "task_index": int(obs["task_index"][0])
+        }
+        
+        return jsonify({
+            "status": "success",
+            "observation": obs_dict,
+            "reward": float(reward),
+            "done": bool(done),
+            "truncated": bool(truncated),
+            "info": info
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
-print("[END]")
 
-# Keep process alive (prevents restart loop)
-import time
-try:
-    while True:
-        time.sleep(3600)
-except KeyboardInterrupt:
-    pass
+@app.route("/health", methods=["GET"])
+def health():
+    """Health check endpoint."""
+    return jsonify({"status": "healthy"})
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=7860, debug=False)
