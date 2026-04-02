@@ -1,0 +1,39 @@
+# pyproject.toml
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "space-mission-rl-env"
+version = "1.0.0"
+description = "Gymnasium RL Environment for Space Mission Control Decision System"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Hackathon Submission"},
+]
+keywords = ["rl", "gymnasium", "reinforcement-learning", "space-mission"]
+
+dependencies = [
+    "gymnasium>=0.29.0",
+    "numpy>=1.24.0",
+    "flask>=2.0.0",
+    "werkzeug>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/space-mission-rl-env"
+Documentation = "https://huggingface.co/spaces/SAMRADDHASHRIVASTAVATECH/space-mission-rl-env"
+
+[tool.setuptools]
+packages = [""]
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
