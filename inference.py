@@ -1,6 +1,5 @@
 """
 inference.py - OpenEnv Web API
-Provides REST endpoints for reset() and step()
 """
 
 import os
@@ -12,7 +11,7 @@ from env import SpaceMissionEnv
 
 app = Flask(__name__)
 
-# Global environment (persists across requests)
+# Global environment
 _ENV = None
 _TASKS = None
 
@@ -33,7 +32,6 @@ def reset():
         env = init_env()
         obs, info = env.reset()
         
-        # Convert obs to JSON-serializable format
         obs_dict = {
             "difficulty": int(obs["difficulty"][0]),
             "task_index": int(obs["task_index"][0])
